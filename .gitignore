@@ -1,0 +1,15 @@
+node_modules
+
+*.pem
+*.cert
+*.key
+
+.vs
+.env
+*.exe
+*.dll
+*.pdb
+*.txt
+
+pi-melon-mod/pi-melon-mod/obj
+pi-melon-mod/pi-melon-mod/bin

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      body, button, input {
+        background-color: rgb(23, 39, 63);
+        color: silver;
+        font-family: 'Roboto Mono', monospace;
+      }
+
+      .self-center {
+        margin: auto;
+        max-width: 1300px;
+        width: 95%;
+      }
+
+      .centered-items {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 1em;
+      }
+
+      .text-center {
+        text-align: center;
+      }
+
+      .io {
+        color: inherit;
+        background-color: inherit;
+        font-family: inherit;
+        height: 15em;
+        width: 100%;
+        resize: none;
+        outline: none;
+        font-size: medium;
+        box-sizing: border-box;
+        border: none;
+        position: relative;
+        overflow-wrap: normal;
+        overflow-x: scroll;
+        white-space: pre;
+      }
+
+      .fixed-io {
+        width: 95%;
+        border: 2px silver solid;
+        padding: 8px 8px 8px 8px;
+      }
+
+      .clear-text {
+        position: absolute;
+        box-sizing: border-box;
+        right: calc(17% + 16px);
+        z-index: 100;
+        color: inherit;
+        background: inherit;
+        border: none;
+        font-family: inherit;
+        font-size: xx-large;
+      }
+
+      .hidden {
+        opacity: 0;
+      }
+
+      .form-id {
+        width: 42%;
+      }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div class="self-center centered-items" style="max-width: 1024px;">
+      <p>Imprint Generator</p>
+      <span id="results">Upload for results</span>
+      <p><button id="upload">Upload</button></p>
+      <div style="display: flex; width: 95%;">
+        <div class="form-id">
+          <span>Amount</span>
+        </div>
+        <div>
+          <input id="amount" type="number" value="1000">
+        </div>
+      </div>
+      <div style="display: flex; width: 95%;">
+        <div class="form-id">
+          <span>Corruption</span>
+        </div>
+        <div>
+          <input id="corruption" type="number" value="300">
+        </div>
+      </div>
+      <div style="display: flex; width: 95%;">
+        <div class="form-id">
+          <span>Forging Potential</span>
+        </div>
+        <div>
+          <input id="forgingPotential" type="number" value="35">
+        </div>
+      </div>
+      <p>Equipment from maxroll.gg (use one item)</p>
+      <div class="fixed-io">
+        <textarea id="equipment" class="io" placeholder="Equipment from maxroll.gg planner"></textarea>
+      </div>
+      <p>Item filter</p>
+      <div class="fixed-io">
+        <textarea id="filter" class="io" placeholder="Last Epoch item filter"></textarea>
+      </div>
+    </div>
+    <script>
+      class ImprintUploader {
+        constructor () {
+          this._resultsEl = document.querySelector('#results')
+          this._uploadEl = document.querySelector('#upload')
+          this._amountEl = document.querySelector('#amount')
+          this._corruptionEl = document.querySelector('#corruption')
+          this._forgingPotential = document.querySelector('#forgingPotential')
+          this._equipmentEl = document.querySelector('#equipment')
+          this._filterEl = document.querySelector('#filter')
+          this._uploading = false
+          this.hook()
+          if (localStorage.getItem('filter')) {
+            this._filterEl.value = localStorage.getItem('filter')
+          }
+        }
+
+        hook () {
+          this._uploadEl.addEventListener('click', () => {
+            this.upload()
+          })
+          this._filterEl.addEventListener('change', () => {
+            localStorage.setItem('filter', this._filterEl.value)
+          })
+        }
+
+        async upload () {
+          if (this._uploading) {
+            return
+          }
+          this._uploading = true
+          this._uploadEl.classList.add('hidden')
+          this._resultsEl.innerHTML = 'Processing...'
+          try {
+            const payload = JSON.stringify(this.payload())
+            const res = await fetch('https://imprint.exiledagain.org/generate', {
+              method: 'POST',
+              body: payload,
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            })
+            const text = await res.text()
+            this._resultsEl.innerHTML = text
+          } catch (e) {
+            this._resultsEl.innerHTML = 'An error occurred'
+          } finally {
+            this._uploading = false
+            this._uploadEl.classList.remove('hidden')
+          }
+        }
+
+        payload () {
+          return {
+            amount: this._amountEl.value,
+            corruption: this._corruptionEl.value,
+            forgingPotential: this._forgingPotential.value,
+            equipment: this._equipmentEl.value,
+            filter: this._filterEl.value,
+          }
+        }
+      }
+      window.uploader = new ImprintUploader()
+    </script>
+  </body>
+</html>
