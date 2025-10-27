@@ -23,7 +23,7 @@ namespace pi_melon_mod.Server
             }
         }
 
-        public int MaxMessageSize = 1024 * 1024;
+        public int MaxMessageSize = 1024 * 1024 * 20;
         public delegate void RemoteRequest(byte[] data, ServerResponse response);
         public event RemoteRequest OnRemoteRequest;
 

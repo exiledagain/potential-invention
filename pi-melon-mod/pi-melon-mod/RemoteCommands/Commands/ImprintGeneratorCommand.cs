@@ -75,17 +75,19 @@ namespace pi_melon_mod.RemoteCommands.Commands
                         GroundItemManager.instance.dropItemForPlayer(actor, args.Item, actor.position(), false);
                     }
 
+                    var cof = actor.localTreeData.getFactionInfoProvider().CoF();
+                    var mg = actor.localTreeData.getFactionInfoProvider().MG();
                     if (args.Faction == 0)
                     {
-                        var faction = actor.localTreeData.getFactionInfoProvider().CoF();
-                        faction.Join();
-                        faction.GainReputation(100_000_000);
+                        mg.Leave();
+                        cof.Join();
+                        cof.GainReputation(100_000_000);
                     }
                     else
                     {
-                        var faction = actor.localTreeData.getFactionInfoProvider().MG();
-                        faction.Join();
-                        faction.GainReputation(100_000_000);
+                        cof.Leave();
+                        mg.Join();
+                        mg.GainReputation(100_000_000);
                     }
 
                     // we must be a member of the weavers (LE 1.3)
