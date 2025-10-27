@@ -2,7 +2,7 @@
 <html>
   <head>
     <style>
-      body, button, input {
+      body, button, input, select {
         background-color: rgb(23, 39, 63);
         color: silver;
         font-family: 'Roboto Mono', monospace;
@@ -100,6 +100,17 @@
       </div>
       <div style="display: flex; width: 95%;">
         <div class="form-id">
+          <span>Faction</span>
+        </div>
+        <div>
+          <select id="faction">
+            <option value="0" selected="">CoF</option>
+            <option value="1">MG</option>"
+          </select>
+        </div>
+      </div>
+      <div style="display: flex; width: 95%;">
+        <div class="form-id">
           <span>Forging Potential</span>
         </div>
         <div>
@@ -122,6 +133,7 @@
           this._uploadEl = document.querySelector('#upload')
           this._amountEl = document.querySelector('#amount')
           this._corruptionEl = document.querySelector('#corruption')
+          this._factionEl = document.querySelector('#faction')
           this._forgingPotential = document.querySelector('#forgingPotential')
           this._equipmentEl = document.querySelector('#equipment')
           this._filterEl = document.querySelector('#filter')
@@ -171,6 +183,7 @@
           return {
             amount: this._amountEl.value,
             corruption: this._corruptionEl.value,
+            faction: this._factionEl.value,
             forgingPotential: this._forgingPotential.value,
             equipment: this._equipmentEl.value,
             filter: this._filterEl.value,

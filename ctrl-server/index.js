@@ -185,6 +185,7 @@ app.post('/generate', async (req, res) => {
     data = {
       amount: clamp(Number(payload.amount), 10, 10000),
       corruption: clamp(Number(payload.corruption), 0, 100000),
+      faction: clamp(Number(payload.faction), 0, 1),
       forgingPotential: clamp(Number(payload.forgingPotential), 0, 60),
       item: firstItemSlot[1],
       query: payload.filter
@@ -207,7 +208,7 @@ app.post('/generate', async (req, res) => {
       res.end(ret)
       return
     }
-    res.end(`Your imprint slot (${firstItemSlot[0]}) passed ${ret.passes}/${ret.amount}.`)
+    res.end(`Your imprint slot (${firstItemSlot[0]}) passed ${ret.passes}/${ret.amount} ${(data.faction ? 'MG' : 'CoF')}.`)
   } catch (e) {
     console.error(e)
     res.statusCode = 500

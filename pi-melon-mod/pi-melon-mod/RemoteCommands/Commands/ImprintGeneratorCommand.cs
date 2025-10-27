@@ -21,6 +21,7 @@ namespace pi_melon_mod.RemoteCommands.Commands
             public ItemDataUnpacked Item { get; private set; }
             public int ItemLevel { get; private set; }
             public string Query { get; private set; }
+            public int Faction { get; private set; }
 
             public GenerationRequest(byte[] data)
             {
@@ -34,6 +35,7 @@ namespace pi_melon_mod.RemoteCommands.Commands
                 Item = Common.CreateItemFromJson(doc.RootElement.GetProperty("item"));
                 ItemLevel = doc.RootElement.GetProperty("ilvl").GetInt32();
                 Query = doc.RootElement.GetProperty("query").GetString();
+                Faction = doc.RootElement.GetProperty("faction").GetInt32();
                 Item.forgingPotential = EpochExtensions.clampToByte(ForgingPotential);
                 Item.RefreshIDAndValues();
             }
@@ -72,6 +74,20 @@ namespace pi_melon_mod.RemoteCommands.Commands
                     {
                         GroundItemManager.instance.dropItemForPlayer(actor, args.Item, actor.position(), false);
                     }
+
+                    if (args.Faction == 0)
+                    {
+                        var faction = actor.localTreeData.getFactionInfoProvider().CoF();
+                        faction.Join();
+                        faction.GainReputation(100_000_000);
+                    }
+                    else
+                    {
+                        var faction = actor.localTreeData.getFactionInfoProvider().MG();
+                        faction.Join();
+                        faction.GainReputation(100_000_000);
+                    }
+
                     // we must be a member of the weavers (LE 1.3)
                     var weaver = actor.localTreeData.getFactionInfoProvider().TW();
                     weaver.Join();

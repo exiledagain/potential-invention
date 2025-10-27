@@ -6,13 +6,14 @@ const maxRollJson = JSON.parse(`
 `)
 
 const payload = {
-  amount: 1000,
+  amount: 1,
   corruption: 0,
   dropImprint: true,
   dropMatches: false,
   forgingPotential: 35,
   item: Object.entries(maxRollJson.items)[0][1],
   ilvl: 100,
+  faction: 1,
   query: fs.readFileSync('query.txt', { encoding: 'utf8' })
 }
 
