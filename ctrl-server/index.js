@@ -141,6 +141,7 @@ async function GenerationRequest (data) {
       const len = await stream.readInt32()
       if (len !== 8) {
         resolve('Last Epoch is unavailable or your data is wrong.')
+        socket.end()
         return
       }
       const passes = await stream.readInt32()
@@ -174,6 +175,7 @@ app.options('/generate', (req, res) => {
 
 const lock = new Lock()
 app.post('/generate', async (req, res) => {
+  console.log(`/generate at ${new Date().toLocaleString()}`)
   res.setHeader('Access-Control-Allow-Origin', '*')
   const payload = req.body
   let firstItemSlot
