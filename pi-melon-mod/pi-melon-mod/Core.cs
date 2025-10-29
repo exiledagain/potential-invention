@@ -16,11 +16,11 @@ namespace pi_melon_mod
         protected int Port;
         private ByteServer server;
         private Dictionary<int, RemoteCommand> commands;
-        private ConcurrentQueue<IEnumerable<bool>> workQueue;
+        private ConcurrentQueue<Runnable> workQueue;
 
         public override void OnInitializeMelon()
         {
-            workQueue = new();
+            workQueue = new ConcurrentQueue<Runnable>();
             LoadPreferences(MelonPreferences.GetCategory("pi-melon-mod"));
             LoadCommands();
             server = new ByteServer(Port);
@@ -68,7 +68,7 @@ namespace pi_melon_mod
             }
         }
 
-        public void EnqueueWork(IEnumerable<bool> r)
+        public void EnqueueWork(Runnable r)
         {
             workQueue.Enqueue(r);
         }
@@ -77,20 +77,9 @@ namespace pi_melon_mod
         {
             while (!workQueue.IsEmpty)
             {
-                if (workQueue.TryPeek(out var result))
+                if (workQueue.TryDequeue(out var result))
                 {
-                    var enumerator = result.GetEnumerator();
-                    if (enumerator.MoveNext())
-                    {
-                        if (!enumerator.Current)
-                        {
-                            workQueue.TryDequeue(out var _);
-                        }
-                    }
-                    else
-                    {
-                        workQueue.TryDequeue(out var _);
-                    }
+                    result();
                 }
             }
             base.OnUpdate();
