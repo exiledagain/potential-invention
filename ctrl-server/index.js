@@ -136,6 +136,7 @@ async function GenerationRequest (data) {
       socket.write(Buffer.concat([buf, jsonBuf]), err => {
         if (err) {
           reject(err)
+          socket.end()
         }
       })
       const len = await stream.readInt32()

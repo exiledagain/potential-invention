@@ -2,11 +2,11 @@ const fs = require('fs')
 const net = require('net')
 
 const maxRollJson = JSON.parse(`
-{"items":{"head":{"itemType":0,"subType":61,"affixes":[{"id":331,"tier":5,"roll":1},{"id":1,"tier":5,"roll":1},{"id":31,"tier":7,"roll":1},{"id":504,"tier":5,"roll":1}],"implicits":[1,1]}}}
+{"items":{"finger2":{"itemType":21,"subType":3}}}
 `)
 
 const payload = {
-  amount: 1,
+  amount: 1e6,
   corruption: 0,
   dropImprint: true,
   dropMatches: false,
@@ -111,6 +111,7 @@ async function Main () {
     const passes = await stream.readInt32()
     const amount = await stream.readInt32()
     console.log('passes', passes)
+    console.log('amount', amount)
     console.log('p', passes / amount)
     socket.end()
   })
