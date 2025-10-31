@@ -2,39 +2,11 @@ const dotenv = require('dotenv')
 const express = require('express')
 const fs = require('fs')
 const https = require('https')
+
 const GenerationRequest = require('./common/GenerationRequest')
+const Lock = require('./common/Lock')
 
 dotenv.config({ quiet: true })
-
-class Lock {
-  constructor () {
-    this._locked = false
-    this._queue = []
-  }
-
-  async acquire () {
-    if (!this._locked) {
-      this._locked = true
-      return
-    }
-
-    let resolver
-    const promise = new Promise(resolve => {
-      resolver = resolve
-    })
-    this._queue.push(resolver)
-    return promise
-  }
-
-  release () {
-    if (this._queue.length > 0) {
-      const resolver = this._queue.shift()
-      resolver()
-    } else {
-      this._locked = false
-    }
-  }
-}
 
 const clamp = (v, a, b) => {
   if (!Number.isFinite(v)) {
