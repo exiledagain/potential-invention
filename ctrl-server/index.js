@@ -1,8 +1,8 @@
 const dotenv = require('dotenv')
 const express = require('express')
-const net = require('net')
-const https = require('https')
 const fs = require('fs')
+const https = require('https')
+const GenerationRequest = require('./common/GenerationRequest')
 
 dotenv.config({ quiet: true })
 
@@ -36,124 +36,11 @@ class Lock {
   }
 }
 
-class BufferStream {
-  constructor () {
-    this.bufs = []
-    this.ensures = []
-    this.length = 0
-    this.offset = 0
-  }
-
-  read (len) {
-    if (len > this.rem()) {
-      throw new Error('do not call read when len > rem')
-    }
-    let rem = len
-    const bufs = []
-    while (rem > 0) {
-      const canRead = this.bufs[0].length - this.offset
-      const toBeRead = Math.min(canRead, rem)
-      rem -= toBeRead
-      bufs.push(this.bufs[0].subarray(this.offset, this.offset + toBeRead))
-      this.offset += toBeRead
-      if (this.offset >= this.bufs[0].length) {
-        this.offset = 0
-        this.bufs.shift()
-      }
-    }
-    this.length -= len
-    const res = Buffer.concat(bufs)
-    return res
-  }
-
-  ensure (len) {
-    if (len > this.rem()) {
-      const res = { len }
-      const ensurePromise = new Promise((resolve, reject) => {
-        res.ensureResolve = resolve
-        res.ensureReject = reject
-      })
-      res.ensurePromise = ensurePromise
-      this.ensures.push(res)
-      return ensurePromise
-    }
-    return this.read(len)
-  }
-
-  rem () {
-    return this.length
-  }
-
-  async add (buf) {
-    this.bufs.push(buf)
-    this.length += buf.length
-    while (this.ensures.length > 0) {
-      const current = this.ensures.shift()
-      if (this.rem() >= current.len) {
-        current.ensureResolve(this.read(current.len))
-      }
-    }
-  }
-
-  async readInt32 () {
-    const buf = await this.ensure(4)
-    return buf.readInt32LE(0)
-  }
-}
-
 const clamp = (v, a, b) => {
   if (!Number.isFinite(v)) {
     return a
   }
   return Math.max(a, Math.min(v, b))
-}
-
-async function GenerationRequest (data) {
-  data.dropImprint = false
-  data.dropMatches = false
-  data.ilvl = 100
-  return new Promise((resolve, reject) => {
-    const stream = new BufferStream()
-    const socket = new net.Socket()
-    socket.connect(5011)
-    socket.on('error', e => {
-      console.error(e)
-      resolve('We tried to connect and failed.')
-    })
-    socket.on('close', () => {
-      setTimeout(() => {
-        resolve('This one is on us.')
-      }, 2000)
-    })
-    socket.on('data', buf => {
-      stream.add(buf)
-    })
-    socket.on('ready', async () => {
-      const jsonBuf = Buffer.from(JSON.stringify(data))
-      const buf = Buffer.alloc(6)
-      buf.writeInt32LE(jsonBuf.length + 2, 0)
-      buf.writeInt16LE(1, 4)
-      socket.write(Buffer.concat([buf, jsonBuf]), err => {
-        if (err) {
-          reject(err)
-          socket.end()
-        }
-      })
-      const len = await stream.readInt32()
-      if (len !== 8) {
-        resolve('Last Epoch is unavailable or your data is wrong.')
-        socket.end()
-        return
-      }
-      const passes = await stream.readInt32()
-      const amount = await stream.readInt32()
-      resolve({
-        passes,
-        amount
-      })
-      socket.end()
-    })
-  })
 }
 
 const app = express()
