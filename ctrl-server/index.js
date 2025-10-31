@@ -47,6 +47,7 @@ app.post('/generate', async (req, res) => {
       corruption: clamp(Number(payload.corruption), 0, 100000),
       faction: clamp(Number(payload.faction), 0, 1),
       forgingPotential: clamp(Number(payload.forgingPotential), 0, 60),
+      legendaryPotential: clamp(Number(payload.legendaryPotential), 0, 28),
       item: firstItemSlot[1],
       query: payload.filter
     }

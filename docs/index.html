@@ -117,6 +117,14 @@
           <input id="forgingPotential" type="number" value="35">
         </div>
       </div>
+      <div style="display: flex; width: 95%;">
+        <div class="form-id">
+          <span>Legendary Potential</span>
+        </div>
+        <div>
+          <input id="legendaryPotential" type="number" value="0">
+        </div>
+      </div>
       <p>Equipment from maxroll.gg (use one item)</p>
       <div class="fixed-io">
         <textarea id="equipment" class="io" placeholder="Equipment from maxroll.gg planner"></textarea>
@@ -129,14 +137,15 @@
     <script>
       class ImprintUploader {
         constructor () {
-          this._resultsEl = document.querySelector('#results')
-          this._uploadEl = document.querySelector('#upload')
           this._amountEl = document.querySelector('#amount')
           this._corruptionEl = document.querySelector('#corruption')
-          this._factionEl = document.querySelector('#faction')
-          this._forgingPotentialEl = document.querySelector('#forgingPotential')
           this._equipmentEl = document.querySelector('#equipment')
+          this._factionEl = document.querySelector('#faction')
           this._filterEl = document.querySelector('#filter')
+          this._forgingPotentialEl = document.querySelector('#forgingPotential')
+          this._legendaryPotentialEl = document.querySelector('#legendaryPotential')
+          this._resultsEl = document.querySelector('#results')
+          this._uploadEl = document.querySelector('#upload')
           this._uploading = false
           this.hook()
           if (localStorage.getItem('filter')) {
@@ -185,6 +194,7 @@
             corruption: this._corruptionEl.value,
             faction: this._factionEl.value,
             forgingPotential: this._forgingPotentialEl.value,
+            legendaryPotential: this._legendaryPotentialEl.value,
             equipment: this._equipmentEl.value,
             filter: this._filterEl.value,
           }

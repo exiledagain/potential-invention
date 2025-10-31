@@ -38,6 +38,15 @@ namespace pi_melon_mod.RemoteCommands.Commands
                 Query = doc.RootElement.GetProperty("query").GetString();
                 Faction = doc.RootElement.GetProperty("faction").GetInt32();
                 Item.forgingPotential = EpochExtensions.clampToByte(ForgingPotential);
+                var lp = doc.RootElement.GetProperty("legendaryPotential").GetByte();
+                if (Item.isWeaversWillItem())
+                {
+                    Item.weaversWill = Math.Clamp(lp, (byte)0, (byte)28);
+                }
+                else
+                {
+                    Item.legendaryPotential = Math.Clamp(lp, (byte)0, (byte)4);
+                }
                 Item.RefreshIDAndValues();
             }
         }
