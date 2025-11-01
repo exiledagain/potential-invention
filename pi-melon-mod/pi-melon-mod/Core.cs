@@ -58,6 +58,8 @@ namespace pi_melon_mod
             commands = [];
             var igc = new ImprintGeneratorCommand();
             commands.Add(igc.TypeId, igc);
+            var nem = new NemesisCommand();
+            commands.Add(nem.TypeId, nem);
         }
 
         private void LoadPreferences(MelonPreferences_Category category)

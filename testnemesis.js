@@ -1,26 +1,26 @@
 const fs = require('fs')
-const GenerationRequest = require('./ctrl-server/common/GenerationRequest')
+const NemesisRequest = require('./ctrl-server/common/NemesisRequest')
 
 const maxRollJson = JSON.parse(`
-{"items":{"finger2":{"itemType":21,"subType":3}}}
+{"items":{"weapon":{"itemType":12,"subType":10,"uniqueID":365}}}
 `)
 
 const payload = {
-  amount: 21,
-  corruption: 0,
-  dropImprint: true,
+  amount: 1e4,
+  dropEgg: false,
   dropMatches: false,
-  faction: 0,
-  forgingPotential: 35,
+  empowers: 2,
+  faction: 1,
   ilvl: 100,
   item: Object.entries(maxRollJson.items)[0][1],
-  query: fs.readFileSync('query.txt', { encoding: 'utf8' })
+  query: fs.readFileSync('query.txt', { encoding: 'utf8' }),
+  rarity: 515 / 100,
+  useActive: false,
+  void: true
 }
 
 async function Main () {
-  payload.dropImprint = false
-  payload.dropMatches = false
-  const ret = await GenerationRequest(payload)
+  const ret = await NemesisRequest(payload)
   if (typeof ret === 'string') {
     console.error(ret)
     return

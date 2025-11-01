@@ -9,7 +9,8 @@ namespace pi_melon_mod.RemoteCommands
     enum RemoteCommandId
     {
         None,
-        ImprintGenerator
+        ImprintGenerator,
+        Nemesis
     }
     internal abstract class RemoteCommand(int typeId, string name)
     {

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFramework>net6.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
@@ -570,6 +570,7 @@
 	<ItemGroup>
 		<Compile Include="Common.cs" />
 		<Compile Include="RemoteCommands\Commands\ImprintGeneratorCommand.cs" />
+		<Compile Include="RemoteCommands\Commands\NemesisCommand.cs" />
 		<Compile Include="RemoteCommands\RemoteCommand.cs" />
 		<Compile Include="Core.cs" />
 		<Compile Include="Server\ByteServer.cs" />

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="/css/common.css">
+    <title>potential-invention</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
+    <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon"> 
+  </head>
+  <body>
+    <div class="self-center centered-items" style="max-width: 1024px;">
+      <p>
+        <a href="/" style="color: inherit">Other Generators</a>
+      </p>
+      <p>
+        <a href="https://github.com/exiledagain/potential-invention" style="color: inherit">Nemesis Generator source</a>
+      </p>
+      <span id="results">Upload for results</span>
+      <p><button id="upload">Upload</button></p>
+      <div style="display: flex; width: 95%;">
+        <div class="form-id">
+          <span>Amount</span>
+        </div>
+        <div>
+          <input id="amount" type="number" value="1000">
+        </div>
+      </div>
+      <div style="display: flex; width: 95%;">
+        <div class="form-id">
+          <span>Empowers</span>
+        </div>
+        <div>
+          <input id="empowers" type="number" value="2">
+        </div>
+      </div>
+      <div style="display: flex; width: 95%;">
+        <div class="form-id">
+          <span>Faction</span>
+        </div>
+        <div>
+          <select id="faction">
+            <option value="0" selected="">CoF</option>
+            <option value="1">MG</option>"
+          </select>
+        </div>
+      </div>
+      <div style="display: flex; width: 95%;">
+        <div class="form-id">
+          <span>Rarity</span>
+        </div>
+        <div>
+          <input id="rarity" type="number" value="500">
+        </div>
+      </div>
+      <div style="display: flex; width: 95%;">
+        <div class="form-id">
+          <span>Void</span>
+        </div>
+        <div>
+          <select id="void">
+            <option value="0">false</option>
+            <option value="1" selected="">true</option>"
+          </select>
+        </div>
+      </div>
+      <p>Unique equipment item from maxroll.gg (use one item)</p>
+      <div class="fixed-io">
+        <textarea id="equipment" class="io" placeholder="Equipment from maxroll.gg planner"></textarea>
+      </div>
+      <p>Item filter</p>
+      <div class="fixed-io">
+        <textarea id="filter" class="io" placeholder="Last Epoch item filter"></textarea>
+      </div>
+    </div>
+    <script>
+      class ImprintUploader {
+        constructor () {
+          this._resultsEl = document.querySelector('#results')
+          this._uploadEl = document.querySelector('#upload')
+          this._amountEl = document.querySelector('#amount')
+          this._empowersEl = document.querySelector('#empowers')
+          this._factionEl = document.querySelector('#faction')
+          this._rarityEl = document.querySelector('#rarity')
+          this._voidEl = document.querySelector('#void')
+          this._equipmentEl = document.querySelector('#equipment')
+          this._filterEl = document.querySelector('#filter')
+          this._uploading = false
+          this.hook()
+          if (localStorage.getItem('filter')) {
+            this._filterEl.value = localStorage.getItem('filter')
+          }
+        }
+
+        hook () {
+          this._uploadEl.addEventListener('click', () => {
+            this.upload()
+          })
+          this._filterEl.addEventListener('change', () => {
+            localStorage.setItem('filter', this._filterEl.value)
+          })
+        }
+
+        async upload () {
+          if (this._uploading) {
+            return
+          }
+          this._uploading = true
+          this._uploadEl.classList.add('hidden')
+          this._resultsEl.innerHTML = 'Processing...'
+          try {
+            const payload = JSON.stringify(this.payload())
+            const res = await fetch('https://imprint.exiledagain.org/nemesis', {
+              method: 'POST',
+              body: payload,
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            })
+            const text = await res.text()
+            this._resultsEl.innerHTML = text
+          } catch (e) {
+            this._resultsEl.innerHTML = 'An error occurred'
+          } finally {
+            this._uploading = false
+            this._uploadEl.classList.remove('hidden')
+          }
+        }
+
+        payload () {
+          return {
+            amount: this._amountEl.value,
+            rarity: this._rarityEl.value,
+            faction: this._factionEl.value,
+            empowers: this._empowersEl.value,
+            equipment: this._equipmentEl.value,
+            filter: this._filterEl.value,
+            void: this._voidEl.value
+          }
+        }
+      }
+      window.uploader = new ImprintUploader()
+    </script>
+  </body>
+</html>
