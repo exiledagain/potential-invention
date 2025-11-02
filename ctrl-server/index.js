@@ -99,6 +99,7 @@ app.post('/nemesis', async (req, res) => {
       amount: clamp(Number(payload.amount), 1, 10000),
       dropEgg: false,
       dropMatches: false,
+      dropOriginalOnMatch: false,
       empowers: clamp(Number(payload.empowers), 0, 2),
       faction: clamp(Number(payload.faction), 0, 1),
       ilvl: 100,

@@ -21,6 +21,7 @@ namespace pi_melon_mod.RemoteCommands.Commands
             public float Rarity { get; private set; }
             public bool DropEgg { get; private set; }
             public bool DropMatches { get; private set; }
+            public bool DropOriginalOnMatch { get; private set; }
             public ItemDataUnpacked Item { get; private set; }
             public int ItemLevel { get; private set; }
             public string Query { get; private set; }
@@ -35,6 +36,7 @@ namespace pi_melon_mod.RemoteCommands.Commands
                 Amount = Math.Min(100_000, doc.RootElement.GetProperty("amount").GetInt32());
                 DropEgg = doc.RootElement.GetProperty("dropEgg").GetBoolean();
                 DropMatches = doc.RootElement.GetProperty("dropMatches").GetBoolean();
+                DropOriginalOnMatch = doc.RootElement.GetProperty("dropOriginalOnMatch").GetBoolean();
                 UseActive = doc.RootElement.GetProperty("useActive").GetBoolean();
                 Empowers = doc.RootElement.GetProperty("empowers").GetInt32();
                 Faction = doc.RootElement.GetProperty("faction").GetInt32();
@@ -120,6 +122,7 @@ namespace pi_melon_mod.RemoteCommands.Commands
                     {
                         weaver.Leave();
                     }
+
                     if (!args.UseActive)
                     {
                         ZoneInfoManager.SetZoneLevel(args.ItemLevel, true);
@@ -129,6 +132,7 @@ namespace pi_melon_mod.RemoteCommands.Commands
                         MonolithGameplayManager.ActiveRun = new MonolithRun(TimelineID.Volcano, 1, new(), new(), 0, true, true, false, 0, EchoWebIsland.IslandType.Normal, 0, 0, 0, false, false, new(), opts);
                         MonolithGameplayManager.ActiveRun.increasedItemRarity = args.Rarity;
                     }
+
                     GUIUtility.systemCopyBuffer = args.Query;
                     // a possible alternative filter: ItemSearchExpression::ItemMatches
                     if (!ItemFilterManager.Instance.CreateLootFilterFromClipboard(out var filter) || filter == null)
@@ -136,6 +140,7 @@ namespace pi_melon_mod.RemoteCommands.Commands
                         queue.Add([]);
                         return;
                     }
+
                     int matches = 0;
                     var nemesisContainer = ItemContainersManager.Instance.nemesisItems;
                     for (int loop = 0; loop < args.Amount; ++loop)
@@ -160,6 +165,18 @@ namespace pi_melon_mod.RemoteCommands.Commands
                                 }
                             }
                         }
+                        List<ItemDataUnpacked> original = null;
+                        if (args.DropOriginalOnMatch)
+                        {
+                            original = [];
+                            foreach (var container in nemesisContainer.Containers)
+                            {
+                                if (container.content.Quantity > 0)
+                                {
+                                    original.Add(new ItemDataUnpacked(container.content.data.getAsUnpacked()));
+                                }
+                            }
+                        }
                         for (int i = 0; i < args.Empowers; ++i)
                         {
                             nemesisContainer.EmpowerItems();
@@ -175,6 +192,14 @@ namespace pi_melon_mod.RemoteCommands.Commands
                                     GroundItemManager.instance.dropItemForPlayer(actor, item, actor.position(), false);
                                 }
                                 matches += 1;
+                                if (args.DropOriginalOnMatch && original != null)
+                                {
+                                    foreach (var originalItem in original)
+                                    {
+                                        GroundItemManager.instance.dropItemForPlayer(actor, originalItem, actor.position(), false);
+                                    }
+                                    loop = args.Amount;
+                                }
                             }
                         }
                         if (loop % 10000 == 0)
