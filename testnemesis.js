@@ -11,7 +11,7 @@ const payload = {
   dropMatches: true,
   dropOriginalOnMatch: true,
   empowers: 2,
-  faction: 1,
+  faction: 0,
   ilvl: 100,
   item: Object.entries(maxRollJson.items)[0][1],
   query: fs.readFileSync('query.txt', { encoding: 'utf8' }),
@@ -31,4 +31,4 @@ async function Main () {
   console.log('p', ret.passes / ret.amount)
 }
 
-Main().then(process.exit).catch(process.exit)
+Main()

@@ -30,4 +30,4 @@ async function Main () {
   console.log('p', ret.passes / ret.amount)
 }
 
-Main().then(process.exit).catch(process.exit)
+Main()
