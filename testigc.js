@@ -18,8 +18,6 @@ const payload = {
 }
 
 async function Main () {
-  payload.dropImprint = false
-  payload.dropMatches = false
   const ret = await GenerationRequest(payload)
   if (typeof ret === 'string') {
     console.error(ret)
