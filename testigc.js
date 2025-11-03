@@ -14,7 +14,8 @@ const payload = {
   forgingPotential: 35,
   ilvl: 100,
   item: Object.entries(maxRollJson.items)[0][1],
-  query: fs.readFileSync('query.txt', { encoding: 'utf8' })
+  query: fs.readFileSync('query.txt', { encoding: 'utf8' }),
+  legendaryPotential: 0
 }
 
 async function Main () {
