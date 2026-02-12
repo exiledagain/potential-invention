@@ -5,6 +5,7 @@ const https = require('https')
 
 const GenerationRequest = require('./common/GenerationRequest')
 const NemesisRequest = require('./common/NemesisRequest')
+const RandomDropRequest = require('./common/RandomDropRequest')
 const Lock = require('./common/Lock')
 
 dotenv.config({ quiet: true })
@@ -25,7 +26,7 @@ https.createServer({
   cert: fs.readFileSync(process.env.pi_cs_cert)
 }, app).listen(443)
 
-const AllowCors = (req, res) => {
+const AllowCors = (_, res) => {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Credentials', 'false')
@@ -34,6 +35,7 @@ const AllowCors = (req, res) => {
   res.end()
 }
 
+app.options('/randomdrop', AllowCors)
 app.options('/generate', AllowCors)
 app.options('/nemesis', AllowCors)
 
@@ -128,6 +130,50 @@ app.post('/nemesis', async (req, res) => {
       return
     }
     res.end(`${ret.passes}/${ret.amount} ${(data.faction ? 'MG' : 'CoF')} (${firstItemSlot ? firstItemSlot[0] : 'No Item'}).`)
+  } catch (e) {
+    console.error(e)
+    res.statusCode = 500
+    res.end('We tried and failed.')
+  } finally {
+    lock.release()
+  }
+})
+
+app.post('/randomdrop', async (req, res) => {
+  console.log(`/randomdrop at ${new Date().toLocaleString()}`)
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  const payload = req.body
+  let data
+  try {
+    data = {
+      amount: clamp(Number(payload.amount), 1, 10000),
+      dropMatches: false,
+      faction: clamp(Number(payload.faction), 0, 1),
+      ilvl: 100,
+      query: payload.filter,
+      rarity: clamp(Number(payload.rarity), 0, 5e5) / 100,
+      corruption: clamp(Number(payload.corruption), 0, 100000),
+      useActive: false
+    }
+  } catch (e) {
+    console.error(e)
+    res.statusCode = 400
+    res.end('Your data could not be parsed.')
+    return
+  }
+  try {
+    await lock.acquire()
+    if (res.closed) {
+      res.end('Nothing to do here.')
+      return
+    }
+    const ret = await RandomDropRequest(data)
+    res.statusCode = 200
+    if (typeof ret === 'string') {
+      res.end(ret)
+      return
+    }
+    res.end(`${ret.passes}/${ret.amount} ${(data.faction ? 'MG' : 'CoF')}`)
   } catch (e) {
     console.error(e)
     res.statusCode = 500
