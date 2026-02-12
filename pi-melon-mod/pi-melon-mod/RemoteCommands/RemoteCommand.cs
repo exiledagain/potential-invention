@@ -10,7 +10,8 @@ namespace pi_melon_mod.RemoteCommands
     {
         None,
         ImprintGenerator,
-        Nemesis
+        Nemesis,
+        RandomDrop,
     }
     internal abstract class RemoteCommand(int typeId, string name)
     {

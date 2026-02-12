@@ -60,6 +60,8 @@ namespace pi_melon_mod
             commands.Add(igc.TypeId, igc);
             var nem = new NemesisCommand();
             commands.Add(nem.TypeId, nem);
+            var ran = new RandomDropCommand();
+            commands.Add(ran.TypeId, ran);
         }
 
         private void LoadPreferences(MelonPreferences_Category category)

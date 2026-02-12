@@ -570,6 +570,7 @@
 	<ItemGroup>
 		<Compile Include="Common.cs" />
 		<Compile Include="RemoteCommands\Commands\ImprintGeneratorCommand.cs" />
+		<Compile Include="RemoteCommands\Commands\RandomDropCommand.cs" />
 		<Compile Include="RemoteCommands\Commands\NemesisCommand.cs" />
 		<Compile Include="RemoteCommands\RemoteCommand.cs" />
 		<Compile Include="Core.cs" />

@@ -6,10 +6,10 @@ const maxRollJson = JSON.parse(`
 `)
 
 const payload = {
-  amount: 1e5,
+  amount: 1e3,
   dropEgg: false,
-  dropMatches: true,
-  dropOriginalOnMatch: true,
+  dropMatches: false,
+  dropOriginalOnMatch: false,
   empowers: 2,
   faction: 0,
   ilvl: 100,

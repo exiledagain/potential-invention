@@ -29,7 +29,6 @@ namespace pi_melon_mod.Server
 
         private readonly int DesiredPort;
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0290:Use primary constructor", Justification = "<Pending>")]
         public ByteServer(int desiredPort)
         {
             DesiredPort = desiredPort;

@@ -33,7 +33,7 @@ namespace pi_melon_mod.RemoteCommands.Commands
             {
                 var str = Encoding.UTF8.GetString(data, 0, data.Length);
                 using var doc = JsonDocument.Parse(str);
-                Amount = Math.Min(100_000, doc.RootElement.GetProperty("amount").GetInt32());
+                Amount = Math.Min(1_000_000, doc.RootElement.GetProperty("amount").GetInt32());
                 DropEgg = doc.RootElement.GetProperty("dropEgg").GetBoolean();
                 DropMatches = doc.RootElement.GetProperty("dropMatches").GetBoolean();
                 DropOriginalOnMatch = doc.RootElement.GetProperty("dropOriginalOnMatch").GetBoolean();
