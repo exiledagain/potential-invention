@@ -146,13 +146,13 @@ app.post('/randomdrop', async (req, res) => {
   let data
   try {
     data = {
-      amount: clamp(Number(payload.amount), 1, 10000),
+      amount: clamp(Number(payload.amount), 1, 100000),
       dropMatches: false,
       faction: clamp(Number(payload.faction), 0, 1),
       ilvl: 100,
       query: payload.filter,
       rarity: clamp(Number(payload.rarity), 0, 5e5) / 100,
-      corruption: clamp(Number(payload.corruption), 0, 100000),
+      corruption: clamp(Number(payload.corruption), 0, 5e5),
       useActive: false
     }
   } catch (e) {

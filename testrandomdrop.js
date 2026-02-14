@@ -6,8 +6,8 @@ const RandomDropRequest = require('./ctrl-server/common/RandomDropRequest')
 // 100, 85  ~  8.5%
 
 const payload = {
-  amount: 1e5,
-  dropMatches: false,
+  amount: 1e3,
+  dropMatches: true,
   faction: 0,
   ilvl: 100,
   query: fs.readFileSync('query.txt', { encoding: 'utf8' }),
