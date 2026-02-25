@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>5x5 Grid Shape Optimizer</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --panel-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --border-color: #333;
+            --free-color: #2c2c2c;
+            --blocked-color: #000000;
+            --empowered-color: #d4af37;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0; padding: 20px;
+            display: flex; gap: 20px;
+            height: 100vh; box-sizing: border-box;
+        }
+        
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-color); }
+        ::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        .sidebar {
+            width: 360px; background: var(--panel-bg);
+            padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            display: flex; flex-direction: column; gap: 15px; flex-shrink: 0;
+            overflow-y: auto;
+        }
+        .main-content {
+            flex: 1; background: var(--panel-bg);
+            padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            overflow-y: auto;
+        }
+        h1, h2, h3 { margin-top: 0; font-size: 1.1rem; color: #fff; }
+        p { font-size: 0.9rem; color: #aaa; margin: 0 0 10px 0; line-height: 1.4; }
+        
+        /* Preset Visuals */
+        .preset-container {
+            display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 5px;
+        }
+        .preset-card {
+            background: var(--bg-color); border: 1px solid var(--border-color);
+            border-radius: 6px; padding: 6px; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
+            transition: all 0.2s; flex: 1; min-width: 60px;
+        }
+        .preset-card:hover { border-color: var(--empowered-color); background: #1a1a1a; }
+        .preset-card span { font-size: 0.7rem; color: #ccc; text-align: center; line-height: 1.1; }
+        .preset-mini-grid { display: grid; grid-template-columns: repeat(5, 10px); gap: 1px; }
+        .preset-mini-cell { width: 10px; height: 10px; border-radius: 1px; }
+
+        .grid-editor {
+            display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-bottom: 5px;
+        }
+        .cell {
+            aspect-ratio: 1; border: 1px solid var(--border-color);
+            cursor: pointer; border-radius: 4px;
+            transition: all 0.2s; display: flex; align-items: center; justify-content: center; font-size: 11px;
+            user-select: none;
+        }
+        .cell:hover { border-color: #777; }
+        .cell.free { background-color: var(--free-color); }
+        .cell.blocked { background-color: var(--blocked-color); box-shadow: inset 0 0 15px rgba(255,50,50,0.2); border-color: #600; color: #fff; }
+        .cell.empowered { background-color: var(--empowered-color); color: #000; font-weight: bold; }
+        
+        .btn {
+            background: #007acc; color: white; border: none; padding: 12px;
+            border-radius: 4px; cursor: pointer; font-size: 1rem; width: 100%; font-weight: bold;
+        }
+        .btn:hover { background: #005f9e; }
+        .btn:disabled { background: #444; cursor: not-allowed; }
+
+        .filter-section {
+            border-top: 1px solid var(--border-color); padding-top: 15px; display: none;
+        }
+        .filter-list { display: flex; flex-direction: column; gap: 6px; }
+        .filter-item {
+            display: flex; align-items: center; gap: 8px; font-size: 0.9rem;
+            cursor: pointer; padding: 4px; border-radius: 4px;
+        }
+        .filter-item:hover { background: #2a2a2a; }
+        .filter-item input { accent-color: var(--empowered-color); cursor: pointer; }
+        .filter-badge {
+            background: #333; padding: 2px 6px; border-radius: 3px; font-size: 0.8rem; border: 1px solid #444;
+        }
+        .filter-emp { color: var(--empowered-color); border-color: var(--empowered-color); background: rgba(212, 175, 55, 0.1); }
+        
+        .group {
+            background: var(--bg-color); padding: 15px; border-radius: 8px;
+            margin-bottom: 20px; border: 1px solid var(--border-color);
+        }
+        .group-header {
+            display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; align-items: center;
+        }
+        .tag {
+            background: #333; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; border: 1px solid #444;
+        }
+        .tag-empowered {
+            border-color: var(--empowered-color); color: #fff; background: rgba(212, 175, 55, 0.15);
+        }
+        .tag-filler {
+            background: #222; border-color: #444; color: #888; border-style: dashed;
+        }
+        .layouts { display: flex; flex-wrap: wrap; gap: 12px; }
+        .layout-card {
+            background: var(--panel-bg); padding: 5px; border-radius: 4px; border: 1px solid var(--border-color);
+            display: inline-block;
+        }
+        .mini-grid { display: grid; grid-template-columns: repeat(5, 16px); gap: 1px; }
+        .mini-cell { width: 16px; height: 16px; border-radius: 2px; }
+        
+        .sort-select {
+            background: #333; color: white; border: 1px solid #444; 
+            padding: 6px; border-radius: 4px; margin-left: 10px; font-size: 0.85rem; outline: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h1>5x5 Grid Setup</h1>
+    
+    <div class="preset-container" id="presetContainer">
+        </div>
+
+    <p style="margin-top: 5px;">Click cells below to toggle manually:<br>Gray: Free | Black: Blocked | Gold: Empowered</p>
+    
+    <div class="grid-editor" id="gridEditor"></div>
+    
+    <button class="btn" id="solveBtn" onclick="findLayouts()">Generate Layouts</button>
+    <p id="status" style="color: #ffaa00; font-weight: bold; margin-top: 10px; font-size: 0.9rem;"></p>
+
+    <div class="filter-section" id="filterSection">
+        <h3>Filter by Empowered Type</h3>
+        <p>Show groupings containing:</p>
+        <div class="filter-list" id="filterList"></div>
+        <button class="btn" style="margin-top:10px; background: #333; font-size: 0.8rem; padding: 8px;" onclick="clearFilters()">Clear Filters</button>
+    </div>
+</div>
+
+<div class="main-content" id="results">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h2 style="margin: 0;">Generated Groupings</h2>
+        <div id="sortSection" style="display: none;">
+            <label for="sortSelect" style="font-size: 0.9rem; color: #aaa;">Sort by:</label>
+            <select id="sortSelect" class="sort-select" onchange="renderGroupedSolutions()">
+                <option value="default">Default</option>
+                <option value="empDesc">Most Empowered Shapes</option>
+                <option value="empAsc">Least Empowered Shapes</option>
+                <option value="lep11">Least Empowered (1,1)</option>
+                <option value="mep21">Most Empowered (2,1)</option>
+                <option value="mep12">Most Empowered (1,2)</option>
+                <option value="mep22">Most Empowered (2,2)</option>
+                <option value="mep31">Most Empowered (3,1)</option>
+                <option value="mep13">Most Empowered (1,3)</option>
+                <option value="mep41">Most Empowered (4,1)</option>
+                <option value="mep14">Most Empowered (1,4)</option>
+            </select>
+        </div>
+    </div>
+    <p id="resultsSubtext">Showing 1 example layout per unique grouping.</p>
+    <div id="groupsContainer"></div>
+</div>
+
+<script>
+    let board = new Array(25).fill(0);
+    const MAX_SOLUTIONS = 5e5;
+    let solutions = [];
+    let activeFilters = new Set();
+
+    // Preconfigured Grids with Labels
+    const PRESETS = {
+        a: {
+            name: "A",
+            data: [
+                1,0,0,0,0,
+                0,0,0,0,1,
+                2,2,2,1,1,
+                0,0,0,0,1,
+                1,0,0,0,0
+            ]
+        },
+        b: {
+            name: "B",
+            data: [
+                1,2,0,0,0,
+                0,0,1,1,0,
+                0,2,1,2,0,
+                0,1,1,0,0,
+                0,0,0,2,1
+            ]
+        },
+        c: {
+            name: "C",
+            data: [
+                2,1,1,0,0,
+                0,0,1,0,0,
+                0,0,2,0,0,
+                0,0,1,0,0,
+                0,0,1,1,2
+            ]
+        },
+        d: {
+            name: "D",
+            data: [
+                1,1,2,1,1,
+                1,0,0,0,1,
+                2,0,0,0,2,
+                0,0,2,0,0,
+                0,0,1,0,0
+            ]
+        },
+        e: {
+            name: "E",
+            data: [
+                1,0,0,0,1,
+                2,2,0,2,2,
+                0,1,0,1,0,
+                0,0,0,0,0,
+                1,0,0,0,1
+            ]
+        },
+        f: {
+            name: "F",
+            data: [
+                0,0,1,0,0,
+                0,1,1,1,0,
+                0,2,0,2,0,
+                1,0,0,0,1,
+                0,0,0,0,0
+            ]
+        },
+        g: {
+            name: "G",
+            data: [
+                1,0,0,0,1,
+                2,0,0,0,2,
+                1,0,0,0,1,
+                2,0,0,0,2,
+                1,0,0,0,1
+            ]
+        },
+        h: {
+            name: "H",
+            data: [
+                2,0,0,0,2,
+                0,0,1,0,0,
+                0,1,1,1,0,
+                0,0,1,0,0,
+                2,0,0,0,2
+            ]
+        },        
+        blank: {
+            name: "Blank",
+            data: [
+                0,0,0,0,0,
+                0,0,0,0,0,
+                0,0,0,0,0,
+                0,0,0,0,0,
+                0,0,0,0,0
+            ]
+        },
+    };
+
+    const SHAPES = [
+        { name: "(2,2)", w: 2, h: 2 },
+        { name: "(4,1)", w: 4, h: 1 },
+        { name: "(1,4)", w: 1, h: 4 },
+        { name: "(3,1)", w: 3, h: 1 },
+        { name: "(1,3)", w: 1, h: 3 },
+        { name: "(2,1)", w: 2, h: 1 },
+        { name: "(1,2)", w: 1, h: 2 },
+        { name: "(1,1)", w: 1, h: 1 } 
+    ];
+
+    const PALETTE = ["#e6194b", "#3cb44b", "#ffe119", "#4363d8", "#f58231", "#911eb4", "#46f0f0", "#f032e6", "#bcf60c", "#fabebe", "#008080", "#e6beff", "#9a6324", "#fffac8", "#800000", "#aaffc3", "#808000", "#ffd8b1"];
+
+    function initGrid() {
+        const editor = document.getElementById('gridEditor');
+        editor.innerHTML = '';
+        for (let i = 0; i < 25; i++) {
+            let cell = document.createElement('div');
+            cell.id = `cell-${i}`;
+            cell.onclick = () => toggleCell(i);
+            editor.appendChild(cell);
+        }
+        renderPresetVisuals();
+        updateGridVisuals();
+    }
+
+    function renderPresetVisuals() {
+        const container = document.getElementById('presetContainer');
+        container.innerHTML = '';
+        
+        for (let key in PRESETS) {
+            let preset = PRESETS[key];
+            
+            let card = document.createElement('div');
+            card.className = 'preset-card';
+            card.title = `Load ${preset.name} Preset`;
+            card.onclick = () => loadPreset(key);
+            
+            let miniGrid = document.createElement('div');
+            miniGrid.className = 'preset-mini-grid';
+            
+            // Draw tiny visual representation
+            for(let i=0; i<25; i++) {
+                let cell = document.createElement('div');
+                cell.className = 'preset-mini-cell';
+                if (preset.data[i] === 0) {
+                    cell.style.backgroundColor = 'var(--free-color)';
+                } else if (preset.data[i] === 1) {
+                    cell.style.backgroundColor = 'var(--blocked-color)';
+                    cell.style.border = '1px solid #400';
+                    cell.style.boxSizing = 'border-box';
+                } else if (preset.data[i] === 2) {
+                    cell.style.backgroundColor = 'var(--empowered-color)';
+                }
+                miniGrid.appendChild(cell);
+            }
+            
+            let label = document.createElement('span');
+            label.innerText = preset.name;
+            
+            card.appendChild(miniGrid);
+            card.appendChild(label);
+            container.appendChild(card);
+        }
+    }
+
+    function toggleCell(index) {
+        board[index] = (board[index] + 1) % 3;
+        updateGridVisuals();
+        resetResults();
+    }
+
+    function updateGridVisuals() {
+        for (let i = 0; i < 25; i++) {
+            let el = document.getElementById(`cell-${i}`);
+            if (board[i] === 0) {
+                el.className = 'cell free'; el.innerText = 'Free';
+            } else if (board[i] === 1) {
+                el.className = 'cell blocked'; el.innerText = 'Block';
+            } else {
+                el.className = 'cell empowered'; el.innerText = 'Empow';
+            }
+        }
+    }
+
+    function loadPreset(key) {
+        board = [...PRESETS[key].data];
+        updateGridVisuals();
+        resetResults();
+    }
+
+    function resetResults() {
+        document.getElementById('groupsContainer').innerHTML = '';
+        document.getElementById('status').innerText = '';
+        document.getElementById('filterSection').style.display = 'none';
+        document.getElementById('sortSection').style.display = 'none';
+        document.getElementById('sortSelect').value = 'default';
+        document.getElementById('resultsSubtext').innerHTML = "Showing 1 example layout per unique grouping.";
+        solutions = [];
+        activeFilters.clear();
+    }
+
+    function findLayouts() {
+        document.getElementById('solveBtn').disabled = true;
+        document.getElementById('status').innerText = "Calculating...";
+        document.getElementById('filterSection').style.display = 'none';
+        document.getElementById('sortSection').style.display = 'none';
+        
+        setTimeout(() => {
+            solutions = [];
+            let filled = new Array(25).fill(false);
+            for(let i = 0; i < 25; i++) if(board[i] === 1) filled[i] = true;
+
+            backtrack(0, filled, []);
+            
+            generateFilterOptions();
+            renderGroupedSolutions();
+            
+            let statusTxt = `Found ${solutions.length} total valid configurations.`;
+            if(solutions.length >= MAX_SOLUTIONS) statusTxt += " (Capped)";
+            document.getElementById('status').innerText = statusTxt;
+            document.getElementById('solveBtn').disabled = false;
+        }, 50);
+    }
+
+    function backtrack(cellIndex, filled, currentLayout) {
+        if (solutions.length >= MAX_SOLUTIONS) return;
+
+        while (cellIndex < 25 && filled[cellIndex]) cellIndex++;
+
+        if (cellIndex === 25) {
+            solutions.push(currentLayout.map(p => ({...p})));
+            return;
+        }
+
+        let r = Math.floor(cellIndex / 5);
+        let c = cellIndex % 5;
+
+        for (let shape of SHAPES) {
+            if (r + shape.h <= 5 && c + shape.w <= 5) {
+                let canFit = true;
+                let empoweredCount = 0;
+                let shapeCells = [];
+
+                for (let dr = 0; dr < shape.h; dr++) {
+                    for (let dc = 0; dc < shape.w; dc++) {
+                        let idx = (r + dr) * 5 + (c + dc);
+                        if (filled[idx]) { canFit = false; break; }
+                        shapeCells.push(idx);
+                        if (board[idx] === 2) empoweredCount++;
+                    }
+                    if (!canFit) break;
+                }
+
+                if (canFit) {
+                    for (let idx of shapeCells) filled[idx] = true;
+                    currentLayout.push({ name: shape.name, cells: shapeCells, empowered: empoweredCount });
+                    backtrack(cellIndex + 1, filled, currentLayout);
+                    for (let idx of shapeCells) filled[idx] = false;
+                    currentLayout.pop();
+                }
+            }
+        }
+    }
+
+    function generateFilterOptions() {
+        const filterList = document.getElementById('filterList');
+        filterList.innerHTML = '';
+        activeFilters.clear();
+
+        let uniqueTypes = new Set();
+        
+        solutions.forEach(layout => {
+            layout.forEach(piece => {
+                uniqueTypes.add(`${piece.name}|${piece.empowered}`);
+            });
+        });
+
+        let sortedTypes = Array.from(uniqueTypes).sort((a, b) => {
+            let [nameA, empA] = a.split('|');
+            let [nameB, empB] = b.split('|');
+            if (nameA !== nameB) return nameA.localeCompare(nameB);
+            return parseInt(empB) - parseInt(empA); 
+        });
+
+        if (sortedTypes.length > 0) {
+            document.getElementById('filterSection').style.display = 'block';
+            
+            sortedTypes.forEach(typeKey => {
+                let [name, emp] = typeKey.split('|');
+                let isEmp = parseInt(emp) > 0;
+                
+                let label = document.createElement('label');
+                label.className = 'filter-item';
+                
+                let checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = typeKey;
+                checkbox.onchange = (e) => toggleFilter(typeKey, e.target.checked);
+                
+                let badge = document.createElement('span');
+                badge.className = isEmp ? 'filter-badge filter-emp' : 'filter-badge';
+                badge.innerText = `${name} [${emp}★]`;
+                
+                label.appendChild(checkbox);
+                label.appendChild(badge);
+                filterList.appendChild(label);
+            });
+        }
+    }
+
+    function toggleFilter(key, isChecked) {
+        if (isChecked) activeFilters.add(key);
+        else activeFilters.delete(key);
+        renderGroupedSolutions();
+    }
+
+    function clearFilters() {
+        activeFilters.clear();
+        let checkboxes = document.querySelectorAll('.filter-item input');
+        checkboxes.forEach(cb => cb.checked = false);
+        renderGroupedSolutions();
+    }
+
+    function scoreLayout(key, layout) {
+      return layout.reduce((sum, shape) => {
+        return sum + (shape.name === key && shape.empowered)
+      }, 0)
+    }
+
+    function renderGroupedSolutions() {
+        const container = document.getElementById('groupsContainer');
+        container.innerHTML = '';
+        let groups = {};
+        
+        for (let layout of solutions) {
+            if (activeFilters.size > 0) {
+                let layoutTypes = new Set(layout.map(p => `${p.name}|${p.empowered}`));
+                let passes = true;
+                for (let filterKey of activeFilters) {
+                    if (!layoutTypes.has(filterKey)) { passes = false; break; }
+                }
+                if (!passes) continue;
+            }
+
+            let breakdown = {};
+            let fillerCount = 0;
+            let fillerEmpowered = 0;
+            
+            for (let piece of layout) {
+                if (piece.name === "(1,1)") {
+                    fillerCount++;
+                    if (piece.empowered > 0) fillerEmpowered++;
+                } else {
+                    let key = `${piece.name}|${piece.empowered}`;
+                    breakdown[key] = (breakdown[key] || 0) + 1;
+                }
+            }
+
+            let sortedKeys = Object.keys(breakdown).sort();
+            let groupKeyString = sortedKeys.map(k => {
+                let [name, emp] = k.split('|');
+                return `${breakdown[k]}x ${name} [${emp}★]`;
+            }).join(', ');
+
+            if (groupKeyString === "") groupKeyString = "Pure Default (1,1) Fillers";
+
+            if (!groups[groupKeyString]) {
+                groups[groupKeyString] = {
+                    layouts: [],
+                    fillers: fillerCount,
+                    fillerEmp: fillerEmpowered
+                };
+            }
+            groups[groupKeyString].layouts.push(layout);
+        }
+
+        // Convert the groups object into an array so we can sort it
+        let groupArray = Object.keys(groups).map(keyStr => {
+            let firstLayout = groups[keyStr].layouts[0];
+            // Count how many shapes in this layout contain empowered tiles
+            let empoweredShapesCount = firstLayout.filter(p => p.empowered > 0).length;
+            return {
+                key: keyStr,
+                data: groups[keyStr],
+                empCount: empoweredShapesCount
+            };
+        });
+
+        const sortValue = document.getElementById('sortSelect').value;
+        if (sortValue === 'empDesc') {
+            groupArray.sort((a, b) => b.empCount - a.empCount || a.key.localeCompare(b.key));
+        } else if (sortValue === 'empAsc') {
+            groupArray.sort((a, b) => a.empCount - b.empCount || a.key.localeCompare(b.key));
+        } else if (sortValue.startsWith('mep')) {
+            const scoreKey = `(${sortValue[3]},${sortValue[4]})`
+            groupArray.sort((a, b) => {
+              return scoreLayout(scoreKey, b.data.layouts[0]) - scoreLayout(scoreKey, a.data.layouts[0])
+            })
+        } else if (sortValue.startsWith('lep')) {
+            const scoreKey = `(${sortValue[3]},${sortValue[4]})`
+            groupArray.sort((a, b) => {
+              return scoreLayout(scoreKey, a.data.layouts[0]) - scoreLayout(scoreKey, b.data.layouts[0])
+            })
+        }
+
+        let visibleGroupCount = groupArray.length;
+        let sub = document.getElementById('resultsSubtext');
+        
+        if (visibleGroupCount > 0) {
+            document.getElementById('sortSection').style.display = 'block';
+        }
+
+        if (activeFilters.size > 0) {
+            sub.innerHTML = `Showing <strong>1 example</strong> for each of the <strong>${visibleGroupCount}</strong> groupings matching your filters.`;
+        } else {
+            sub.innerHTML = `Showing <strong>1 example</strong> for each of the <strong>${visibleGroupCount}</strong> unique groupings found.`;
+        }
+
+        for (let item of groupArray) {
+            let keyStr = item.key;
+            let groupData = item.data;
+            let groupDiv = document.createElement('div');
+            groupDiv.className = 'group';
+            
+            let header = document.createElement('div');
+            header.className = 'group-header';
+            
+            let countBadge = document.createElement('span');
+            countBadge.style.cssText = "font-weight:bold; color:#a5d6ff; margin-right:10px;";
+            countBadge.innerText = `1 Example (of ${groupData.layouts.length} Variations):`;
+            header.appendChild(countBadge);
+
+            if (keyStr !== "Pure Default (1,1) Fillers") {
+                keyStr.split(', ').forEach(part => {
+                    let tag = document.createElement('span');
+                    let isEmpowered = !part.includes('[0★]');
+                    tag.className = isEmpowered ? 'tag tag-empowered' : 'tag';
+                    tag.innerText = part.replace('★]', ' Emp]');
+                    header.appendChild(tag);
+                });
+            }
+
+            if (groupData.fillers > 0) {
+                let fillerTag = document.createElement('span');
+                fillerTag.className = 'tag tag-filler';
+                let empText = groupData.fillerEmp > 0 ? ` [${groupData.fillerEmp} Emp]` : '';
+                fillerTag.innerText = `+ ${groupData.fillers}x (1,1) Default Slots${empText}`;
+                header.appendChild(fillerTag);
+            }
+
+            groupDiv.appendChild(header);
+            
+            let layoutsDiv = document.createElement('div');
+            layoutsDiv.className = 'layouts';
+
+            let firstLayout = groupData.layouts[0];
+            let card = document.createElement('div');
+            card.className = 'layout-card';
+            card.appendChild(createMiniGrid(firstLayout));
+            layoutsDiv.appendChild(card);
+
+            groupDiv.appendChild(layoutsDiv);
+            container.appendChild(groupDiv);
+        }
+        
+        if (visibleGroupCount === 0) {
+            container.innerHTML = '<p style="padding:10px;">No layouts match your current grid and filters.</p>';
+        }
+    }
+
+    function createMiniGrid(layout) {
+        const miniGrid = document.createElement('div');
+        miniGrid.className = 'mini-grid';
+        let cells = new Array(25).fill(null);
+        let colorIdx = 0;
+        
+        for (let piece of layout) {
+            let color = piece.name === "(1,1)" ? "#2a2a2a" : PALETTE[colorIdx % PALETTE.length];
+            if (piece.name !== "(1,1)") colorIdx++;
+            for (let idx of piece.cells) {
+                cells[idx] = { color: color, isEmpowered: board[idx] === 2 };
+            }
+        }
+        
+        for (let i = 0; i < 25; i++) {
+            let cellDiv = document.createElement('div');
+            cellDiv.className = 'mini-cell';
+            if (board[i] === 1) {
+                cellDiv.style.backgroundColor = 'transparent';
+                cellDiv.style.border = '1px solid #111';
+                cellDiv.style.boxSizing = 'border-box';
+            } else if (cells[i]) {
+                cellDiv.style.backgroundColor = cells[i].color;
+                if (cells[i].isEmpowered) cellDiv.style.boxShadow = 'inset 0 0 0 2px #d4af37'; 
+            } 
+            miniGrid.appendChild(cellDiv);
+        }
+        return miniGrid;
+    }
+
+    // Initialize UI
+    initGrid();
+</script>
+</body>
+</html>
