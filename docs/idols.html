@@ -118,7 +118,7 @@
         .mini-cell { width: 16px; height: 16px; border-radius: 2px; }
 
         .sort-select {
-            background: #333; color: white; border: 1px solid #444; 
+            background: #333; color: white; border: 1px solid #444;
             padding: 6px; border-radius: 4px; margin-left: 10px; font-size: 0.85rem; outline: none;
         }
     </style>
@@ -184,6 +184,7 @@
     let board = new Array(25).fill(0);
     const MAX_SOLUTIONS = 5e5;
     let solutions = [];
+    let masterGroups = [];
     let activeFilters = new Set();
     let currentDisplayedGroups = [];
 
@@ -299,10 +300,57 @@
         { name: "(1,3)", w: 1, h: 3 },
         { name: "(2,1)", w: 2, h: 1 },
         { name: "(1,2)", w: 1, h: 2 },
-        { name: "(1,1)", w: 1, h: 1 } 
+        { name: "(1,1)", w: 1, h: 1 }
     ];
 
     const PALETTE = ["#e6194b", "#3cb44b", "#ffe119", "#4363d8", "#f58231", "#911eb4", "#46f0f0", "#f032e6", "#bcf60c", "#fabebe", "#008080", "#e6beff", "#9a6324", "#fffac8", "#800000", "#aaffc3", "#808000", "#ffd8b1"];
+
+    function processMasterGroups() {
+        let groups = {};
+        for (let layout of solutions) {
+            let breakdown = {};
+            let fillerCount = 0;
+
+            for (let piece of layout) {
+                if (piece.name === "(1,1)" && piece.empowered === 0) {
+                    fillerCount++;
+                } else {
+                    let key = `${piece.name}|${piece.empowered}`;
+                    breakdown[key] = (breakdown[key] || 0) + 1;
+                }
+            }
+
+            let sortedKeys = Object.keys(breakdown).sort();
+            let groupKeyString = sortedKeys.map(k => {
+                let [name, emp] = k.split('|');
+                return `${breakdown[k]}x ${name} [${emp}★]`;
+            }).join(', ');
+
+            if (groupKeyString === "") groupKeyString = "Pure Default (1,1) Fillers";
+
+            if (!groups[groupKeyString]) {
+                groups[groupKeyString] = {
+                    layouts: [],
+                    fillers: fillerCount,
+                    types: new Set(layout.map(p => `${p.name}|${p.empowered}`)) // Store types for fast filtering
+                };
+            }
+            groups[groupKeyString].layouts.push(layout);
+        }
+
+        masterGroups = Object.keys(groups).map(keyStr => {
+            let groupData = groups[keyStr];
+            let firstLayout = groupData.layouts[0];
+            let empoweredShapesCount = firstLayout.filter(p => p.empowered > 0).length;
+
+            return {
+                key: keyStr,
+                data: groupData,
+                empCount: empoweredShapesCount,
+                types: groupData.types
+            };
+        });
+    }
 
     function initGrid() {
         const editor = document.getElementById('gridEditor');
@@ -405,6 +453,7 @@
             for(let i = 0; i < 25; i++) if(board[i] === 1) filled[i] = true;
 
             backtrack(0, filled, []);
+            processMasterGroups();
 
             generateFilterOptions();
             renderGroupedSolutions();
@@ -463,9 +512,9 @@
 
         let uniqueTypes = new Set();
 
-        solutions.forEach(layout => {
-            layout.forEach(piece => {
-                uniqueTypes.add(`${piece.name}|${piece.empowered}`);
+        masterGroups.forEach(group => {
+            group.types.forEach(type => {
+                uniqueTypes.add(type);
             });
         });
 
@@ -473,7 +522,7 @@
             let [nameA, empA] = a.split('|');
             let [nameB, empB] = b.split('|');
             if (nameA !== nameB) return nameA.localeCompare(nameB);
-            return parseInt(empB) - parseInt(empA); 
+            return parseInt(empB) - parseInt(empA);
         });
 
         if (sortedTypes.length > 0) {
@@ -505,7 +554,9 @@
     function toggleFilter(key, isChecked) {
         if (isChecked) activeFilters.add(key);
         else activeFilters.delete(key);
+
         renderGroupedSolutions();
+        updateFilterVisibility();
     }
 
     function clearFilters() {
@@ -513,78 +564,37 @@
         let checkboxes = document.querySelectorAll('.filter-item input');
         checkboxes.forEach(cb => cb.checked = false);
         renderGroupedSolutions();
+        updateFilterVisibility();
     }
 
     function scoreLayout(key, layout) {
-      return layout.reduce((sum, shape) => {
-        return sum + (shape.name === key && shape.empowered)
-      }, 0)
+        return layout.reduce((sum, shape) => {
+            return sum + (shape.name === key && shape.empowered > 0 ? 1 : 0);
+        }, 0);
     }
 
     function scoreShapeLayout(key, layout) {
-      return layout.reduce((sum, shape) => {
-        return sum + (shape.name === key)
-      }, 0)
+        return layout.reduce((sum, shape) => {
+            return sum + (shape.name === key ? 1 : 0);
+        }, 0);
     }
 
     function renderGroupedSolutions() {
         const container = document.getElementById('groupsContainer');
         container.innerHTML = '';
-        let groups = {};
 
-        for (let layout of solutions) {
-            if (activeFilters.size > 0) {
-                let layoutTypes = new Set(layout.map(p => `${p.name}|${p.empowered}`));
-                let passes = true;
-                for (let filterKey of activeFilters) {
-                    if (!layoutTypes.has(filterKey)) { passes = false; break; }
-                }
-                if (!passes) continue;
-            }
+        let groupArray = masterGroups.filter(group => {
+            // If no filters are clicked, keep everything
+            if (activeFilters.size === 0) return true;
 
-            let breakdown = {};
-            let fillerCount = 0;
-            let fillerEmpowered = 0;
-
-            for (let piece of layout) {
-                // Only treat UNEMPOWERED (1,1) slots as filler
-                if (piece.name === "(1,1)" && piece.empowered === 0) {
-                    fillerCount++;
-                } else {
-                    // Empowered (1,1) slots are now pushed into the main sort/grouping
-                    let key = `${piece.name}|${piece.empowered}`;
-                    breakdown[key] = (breakdown[key] || 0) + 1;
+            // If filters are clicked, check if this group contains ALL of them
+            for (let filterKey of activeFilters) {
+                // We saved 'types' in Step 1 specifically so we could check this instantly
+                if (!group.types.has(filterKey)) {
+                    return false; // Throw it out if it doesn't match
                 }
             }
-
-            let sortedKeys = Object.keys(breakdown).sort();
-            let groupKeyString = sortedKeys.map(k => {
-                let [name, emp] = k.split('|');
-                return `${breakdown[k]}x ${name} [${emp}★]`;
-            }).join(', ');
-
-            if (groupKeyString === "") groupKeyString = "Pure Default (1,1) Fillers";
-
-            if (!groups[groupKeyString]) {
-                groups[groupKeyString] = {
-                    layouts: [],
-                    fillers: fillerCount,
-                    fillerEmp: fillerEmpowered
-                };
-            }
-            groups[groupKeyString].layouts.push(layout);
-        }
-
-        // Convert the groups object into an array so we can sort it
-        let groupArray = Object.keys(groups).map(keyStr => {
-            let firstLayout = groups[keyStr].layouts[0];
-            // Count how many shapes in this layout contain empowered tiles
-            let empoweredShapesCount = firstLayout.filter(p => p.empowered > 0).length;
-            return {
-                key: keyStr,
-                data: groups[keyStr],
-                empCount: empoweredShapesCount
-            };
+            return true; // Keep it if it passed all filter checks
         });
 
         const sortValue = document.getElementById('sortSelect').value;
@@ -631,6 +641,7 @@
             sub.innerHTML = `Showing <strong>1 example</strong> for each of the <strong>${visibleGroupCount}</strong> unique groupings found.`;
         }
 
+        const fragment = document.createDocumentFragment();
         for (let item of groupArray) {
             let keyStr = item.key;
             let groupData = item.data;
@@ -675,12 +686,53 @@
             layoutsDiv.appendChild(card);
 
             groupDiv.appendChild(layoutsDiv);
-            container.appendChild(groupDiv);
+            fragment.appendChild(groupDiv);
         }
 
         if (visibleGroupCount === 0) {
             container.innerHTML = '<p style="padding:10px;">No layouts match your current grid and filters.</p>';
+        } else {
+            container.appendChild(fragment);
         }
+    }
+
+    function updateFilterVisibility() {
+        let validTypes = new Set();
+
+        // 1. Iterate over the condensed masterGroups instead of raw solutions
+        for (let group of masterGroups) {
+            let passes = true;
+
+            // Check if this group meets current active filters
+            for (let filterKey of activeFilters) {
+                // We use the pre-calculated group.types here!
+                if (!group.types.has(filterKey)) {
+                    passes = false;
+                    break;
+                }
+            }
+
+            // If it passes, add all its pieces to the valid types pool
+            if (passes) {
+                for (let type of group.types) {
+                    validTypes.add(type);
+                }
+            }
+        }
+
+        // 2. Update the display of the filter checkboxes
+        let checkboxes = document.querySelectorAll('.filter-item');
+        checkboxes.forEach(label => {
+            let cb = label.querySelector('input');
+            let key = cb.value;
+
+            // Keep visible if it's currently selected OR if it exists in remaining layouts
+            if (activeFilters.has(key) || validTypes.has(key)) {
+                label.style.display = 'flex';
+            } else {
+                label.style.display = 'none'; // Hide invalid options
+            }
+        });
     }
 
     function createMiniGrid(layout) {
@@ -706,8 +758,8 @@
                 cellDiv.style.boxSizing = 'border-box';
             } else if (cells[i]) {
                 cellDiv.style.backgroundColor = cells[i].color;
-                if (cells[i].isEmpowered) cellDiv.style.boxShadow = 'inset 0 0 0 2px #d4af37'; 
-            } 
+                if (cells[i].isEmpowered) cellDiv.style.boxShadow = 'inset 0 0 0 2px #d4af37';
+            }
             miniGrid.appendChild(cellDiv);
         }
         return miniGrid;
@@ -743,13 +795,16 @@
         });
 
         // Trigger the download
-        let encodedUri = encodeURI(csvContent);
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+
         let link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
+        link.setAttribute("href", url);
         link.setAttribute("download", "grid_optimizer_layouts.csv");
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        URL.revokeObjectURL(url);
     }
 
     // Initialize UI
