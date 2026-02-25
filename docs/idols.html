@@ -22,7 +22,7 @@
             display: flex; gap: 20px;
             height: 100vh; box-sizing: border-box;
         }
-        
+
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: var(--bg-color); }
         ::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
@@ -41,7 +41,7 @@
         }
         h1, h2, h3 { margin-top: 0; font-size: 1.1rem; color: #fff; }
         p { font-size: 0.9rem; color: #aaa; margin: 0 0 10px 0; line-height: 1.4; }
-        
+
         /* Preset Visuals */
         .preset-container {
             display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 5px;
@@ -70,7 +70,7 @@
         .cell.free { background-color: var(--free-color); }
         .cell.blocked { background-color: var(--blocked-color); box-shadow: inset 0 0 15px rgba(255,50,50,0.2); border-color: #600; color: #fff; }
         .cell.empowered { background-color: var(--empowered-color); color: #000; font-weight: bold; }
-        
+
         .btn {
             background: #007acc; color: white; border: none; padding: 12px;
             border-radius: 4px; cursor: pointer; font-size: 1rem; width: 100%; font-weight: bold;
@@ -92,7 +92,7 @@
             background: #333; padding: 2px 6px; border-radius: 3px; font-size: 0.8rem; border: 1px solid #444;
         }
         .filter-emp { color: var(--empowered-color); border-color: var(--empowered-color); background: rgba(212, 175, 55, 0.1); }
-        
+
         .group {
             background: var(--bg-color); padding: 15px; border-radius: 8px;
             margin-bottom: 20px; border: 1px solid var(--border-color);
@@ -116,7 +116,7 @@
         }
         .mini-grid { display: grid; grid-template-columns: repeat(5, 16px); gap: 1px; }
         .mini-cell { width: 16px; height: 16px; border-radius: 2px; }
-        
+
         .sort-select {
             background: #333; color: white; border: 1px solid #444; 
             padding: 6px; border-radius: 4px; margin-left: 10px; font-size: 0.85rem; outline: none;
@@ -127,14 +127,14 @@
 
 <div class="sidebar">
     <h1>5x5 Grid Setup</h1>
-    
+
     <div class="preset-container" id="presetContainer">
         </div>
 
     <p style="margin-top: 5px;">Click cells below to toggle manually:<br>Gray: Free | Black: Blocked | Gold: Empowered</p>
-    
+
     <div class="grid-editor" id="gridEditor"></div>
-    
+
     <button class="btn" id="solveBtn" onclick="findLayouts()">Generate Layouts</button>
     <p id="status" style="color: #ffaa00; font-weight: bold; margin-top: 10px; font-size: 0.9rem;"></p>
 
@@ -149,7 +149,7 @@
 <div class="main-content" id="results">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
         <h2 style="margin: 0;">Generated Groupings</h2>
-        <div id="sortSection" style="display: none;">
+        <div id="sortSection" style="display: none; align-items: center; gap: 15px;">
             <label for="sortSelect" style="font-size: 0.9rem; color: #aaa;">Sort by:</label>
             <select id="sortSelect" class="sort-select" onchange="renderGroupedSolutions()">
                 <option value="default">Default</option>
@@ -173,6 +173,7 @@
                 <option value="msc41">Most (4,1)</option>
                 <option value="msc14">Most (1,4)</option>
             </select>
+            <button class="btn" id="exportBtn" style="width: auto; padding: 6px 15px; font-size: 0.85rem; background: #28a745; margin: 0;" onclick="exportToCSV()">Export CSV</button>
         </div>
     </div>
     <p id="resultsSubtext">Showing 1 example layout per unique grouping.</p>
@@ -184,6 +185,7 @@
     const MAX_SOLUTIONS = 5e5;
     let solutions = [];
     let activeFilters = new Set();
+    let currentDisplayedGroups = [];
 
     // Preconfigured Grids with Labels
     const PRESETS = {
@@ -318,18 +320,18 @@
     function renderPresetVisuals() {
         const container = document.getElementById('presetContainer');
         container.innerHTML = '';
-        
+
         for (let key in PRESETS) {
             let preset = PRESETS[key];
-            
+
             let card = document.createElement('div');
             card.className = 'preset-card';
             card.title = `Load ${preset.name} Preset`;
             card.onclick = () => loadPreset(key);
-            
+
             let miniGrid = document.createElement('div');
             miniGrid.className = 'preset-mini-grid';
-            
+
             // Draw tiny visual representation
             for(let i=0; i<25; i++) {
                 let cell = document.createElement('div');
@@ -345,10 +347,10 @@
                 }
                 miniGrid.appendChild(cell);
             }
-            
+
             let label = document.createElement('span');
             label.innerText = preset.name;
-            
+
             card.appendChild(miniGrid);
             card.appendChild(label);
             container.appendChild(card);
@@ -396,17 +398,17 @@
         document.getElementById('status').innerText = "Calculating...";
         document.getElementById('filterSection').style.display = 'none';
         document.getElementById('sortSection').style.display = 'none';
-        
+
         setTimeout(() => {
             solutions = [];
             let filled = new Array(25).fill(false);
             for(let i = 0; i < 25; i++) if(board[i] === 1) filled[i] = true;
 
             backtrack(0, filled, []);
-            
+
             generateFilterOptions();
             renderGroupedSolutions();
-            
+
             let statusTxt = `Found ${solutions.length} total valid configurations.`;
             if(solutions.length >= MAX_SOLUTIONS) statusTxt += " (Capped)";
             document.getElementById('status').innerText = statusTxt;
@@ -460,7 +462,7 @@
         activeFilters.clear();
 
         let uniqueTypes = new Set();
-        
+
         solutions.forEach(layout => {
             layout.forEach(piece => {
                 uniqueTypes.add(`${piece.name}|${piece.empowered}`);
@@ -476,23 +478,23 @@
 
         if (sortedTypes.length > 0) {
             document.getElementById('filterSection').style.display = 'block';
-            
+
             sortedTypes.forEach(typeKey => {
                 let [name, emp] = typeKey.split('|');
                 let isEmp = parseInt(emp) > 0;
-                
+
                 let label = document.createElement('label');
                 label.className = 'filter-item';
-                
+
                 let checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
                 checkbox.value = typeKey;
                 checkbox.onchange = (e) => toggleFilter(typeKey, e.target.checked);
-                
+
                 let badge = document.createElement('span');
                 badge.className = isEmp ? 'filter-badge filter-emp' : 'filter-badge';
                 badge.innerText = `${name} [${emp}★]`;
-                
+
                 label.appendChild(checkbox);
                 label.appendChild(badge);
                 filterList.appendChild(label);
@@ -529,7 +531,7 @@
         const container = document.getElementById('groupsContainer');
         container.innerHTML = '';
         let groups = {};
-        
+
         for (let layout of solutions) {
             if (activeFilters.size > 0) {
                 let layoutTypes = new Set(layout.map(p => `${p.name}|${p.empowered}`));
@@ -543,7 +545,7 @@
             let breakdown = {};
             let fillerCount = 0;
             let fillerEmpowered = 0;
-            
+
             for (let piece of layout) {
                 // Only treat UNEMPOWERED (1,1) slots as filler
                 if (piece.name === "(1,1)" && piece.empowered === 0) {
@@ -614,9 +616,13 @@
 
         let visibleGroupCount = groupArray.length;
         let sub = document.getElementById('resultsSubtext');
-        
+
+        // Save the currently displayed groups to our global variable for exporting
+        currentDisplayedGroups = groupArray;
+
         if (visibleGroupCount > 0) {
-            document.getElementById('sortSection').style.display = 'block';
+            // Use 'flex' instead of 'block' so the dropdown and button align horizontally
+            document.getElementById('sortSection').style.display = 'flex';
         }
 
         if (activeFilters.size > 0) {
@@ -630,10 +636,10 @@
             let groupData = item.data;
             let groupDiv = document.createElement('div');
             groupDiv.className = 'group';
-            
+
             let header = document.createElement('div');
             header.className = 'group-header';
-            
+
             let countBadge = document.createElement('span');
             countBadge.style.cssText = "font-weight:bold; color:#a5d6ff; margin-right:10px;";
             countBadge.innerText = `1 Example (of ${groupData.layouts.length} Variations):`;
@@ -658,7 +664,7 @@
             }
 
             groupDiv.appendChild(header);
-            
+
             let layoutsDiv = document.createElement('div');
             layoutsDiv.className = 'layouts';
 
@@ -671,7 +677,7 @@
             groupDiv.appendChild(layoutsDiv);
             container.appendChild(groupDiv);
         }
-        
+
         if (visibleGroupCount === 0) {
             container.innerHTML = '<p style="padding:10px;">No layouts match your current grid and filters.</p>';
         }
@@ -682,7 +688,7 @@
         miniGrid.className = 'mini-grid';
         let cells = new Array(25).fill(null);
         let colorIdx = 0;
-        
+
         for (let piece of layout) {
             let color = piece.name === "(1,1)" ? "#2a2a2a" : PALETTE[colorIdx % PALETTE.length];
             if (piece.name !== "(1,1)") colorIdx++;
@@ -690,7 +696,7 @@
                 cells[idx] = { color: color, isEmpowered: board[idx] === 2 };
             }
         }
-        
+
         for (let i = 0; i < 25; i++) {
             let cellDiv = document.createElement('div');
             cellDiv.className = 'mini-cell';
@@ -705,6 +711,45 @@
             miniGrid.appendChild(cellDiv);
         }
         return miniGrid;
+    }
+
+    function exportToCSV() {
+        if (currentDisplayedGroups.length === 0) return;
+
+        // Set up the CSV headers
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += "Grouping Name,Empowered Shapes,Free (1,1) Slots,Example Layout Details\n";
+
+        currentDisplayedGroups.forEach(group => {
+            // 1. Grouping Name (wrap in quotes to safely handle commas)
+            let groupingName = `"${group.key}"`;
+
+            // 2. Counts
+            let empCount = group.empCount;
+            let freeSlots = group.data.fillers;
+
+            // 3. Layout details (map the first layout to a readable string of coordinates)
+            let firstLayout = group.data.layouts[0];
+            let layoutDetails = firstLayout.map(p => {
+                let empText = p.empowered > 0 ? ` [${p.empowered}★]` : "";
+                return `${p.name}${empText} at cells [${p.cells.join(" ")}]`;
+            }).join(" | ");
+
+            // Wrap layout details in quotes for CSV safety
+            layoutDetails = `"${layoutDetails}"`;
+
+            // Append row to CSV
+            csvContent += `${groupingName},${empCount},${freeSlots},${layoutDetails}\n`;
+        });
+
+        // Trigger the download
+        let encodedUri = encodeURI(csvContent);
+        let link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "grid_optimizer_layouts.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 
     // Initialize UI
