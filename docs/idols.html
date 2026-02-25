@@ -527,10 +527,11 @@
             let fillerEmpowered = 0;
             
             for (let piece of layout) {
-                if (piece.name === "(1,1)") {
+                // Only treat UNEMPOWERED (1,1) slots as filler
+                if (piece.name === "(1,1)" && piece.empowered === 0) {
                     fillerCount++;
-                    if (piece.empowered > 0) fillerEmpowered++;
                 } else {
+                    // Empowered (1,1) slots are now pushed into the main sort/grouping
                     let key = `${piece.name}|${piece.empowered}`;
                     breakdown[key] = (breakdown[key] || 0) + 1;
                 }
@@ -628,8 +629,8 @@
             if (groupData.fillers > 0) {
                 let fillerTag = document.createElement('span');
                 fillerTag.className = 'tag tag-filler';
-                let empText = groupData.fillerEmp > 0 ? ` [${groupData.fillerEmp} Emp]` : '';
-                fillerTag.innerText = `+ ${groupData.fillers}x (1,1) Default Slots${empText}`;
+                // Empowered text removed, as it's now handled by standard tags
+                fillerTag.innerText = `+ ${groupData.fillers}x (1,1) Free Slots`;
                 header.appendChild(fillerTag);
             }
 
