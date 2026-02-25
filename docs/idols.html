@@ -164,6 +164,13 @@
                 <option value="mep13">Most Empowered (1,3)</option>
                 <option value="mep41">Most Empowered (4,1)</option>
                 <option value="mep14">Most Empowered (1,4)</option>
+                <option value="msc21">Most (2,1)</option>
+                <option value="msc12">Most (1,2)</option>
+                <option value="msc22">Most (2,2)</option>
+                <option value="msc31">Most (3,1)</option>
+                <option value="msc13">Most (1,3)</option>
+                <option value="msc41">Most (4,1)</option>
+                <option value="msc14">Most (1,4)</option>
             </select>
         </div>
     </div>
@@ -258,7 +265,17 @@
                 0,0,1,0,0,
                 2,0,0,0,2
             ]
-        },        
+        },
+        default: {
+            name: "Default",
+            data: [
+                1,0,0,0,1,
+                0,0,0,0,0,
+                0,0,1,0,0,
+                0,0,0,0,0,
+                1,0,0,0,1
+            ]
+        },
         blank: {
             name: "Blank",
             data: [
@@ -586,6 +603,11 @@
             const scoreKey = `(${sortValue[3]},${sortValue[4]})`
             groupArray.sort((a, b) => {
               return scoreShapeLayout(scoreKey, a.data.layouts[0]) - scoreShapeLayout(scoreKey, b.data.layouts[0])
+            })
+        } else if (sortValue.startsWith('msc')) {
+            const scoreKey = `(${sortValue[3]},${sortValue[4]})`
+            groupArray.sort((a, b) => {
+              return scoreShapeLayout(scoreKey, b.data.layouts[0]) - scoreShapeLayout(scoreKey, a.data.layouts[0])
             })
         }
 
