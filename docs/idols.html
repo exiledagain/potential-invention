@@ -155,6 +155,7 @@
                 <option value="default">Default</option>
                 <option value="empDesc">Most Empowered Shapes</option>
                 <option value="empAsc">Least Empowered Shapes</option>
+                <option value="lsc11">Least (1,1)</option>
                 <option value="lep11">Least Empowered (1,1)</option>
                 <option value="mep21">Most Empowered (2,1)</option>
                 <option value="mep12">Most Empowered (1,2)</option>
@@ -500,6 +501,12 @@
       }, 0)
     }
 
+    function scoreShapeLayout(key, layout) {
+      return layout.reduce((sum, shape) => {
+        return sum + (shape.name === key)
+      }, 0)
+    }
+
     function renderGroupedSolutions() {
         const container = document.getElementById('groupsContainer');
         container.innerHTML = '';
@@ -573,6 +580,11 @@
             const scoreKey = `(${sortValue[3]},${sortValue[4]})`
             groupArray.sort((a, b) => {
               return scoreLayout(scoreKey, a.data.layouts[0]) - scoreLayout(scoreKey, b.data.layouts[0])
+            })
+        } else if (sortValue.startsWith('lsc')) {
+            const scoreKey = `(${sortValue[3]},${sortValue[4]})`
+            groupArray.sort((a, b) => {
+              return scoreShapeLayout(scoreKey, a.data.layouts[0]) - scoreShapeLayout(scoreKey, b.data.layouts[0])
             })
         }
 
