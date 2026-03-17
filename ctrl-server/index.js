@@ -19,7 +19,7 @@ const clamp = (v, a, b) => {
 
 const app = express()
 app.disable('x-powered-by')
-app.use(express.json({ limit: '5mb' }))
+app.use(express.json({ limit: '6mb' }))
 
 https.createServer({
   key: fs.readFileSync(process.env.pi_cs_key),
